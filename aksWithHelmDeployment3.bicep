@@ -424,53 +424,53 @@ output fqdn2 string = testResourcesModule.outputs.fqdn2
 
 param randomGuid string = newGuid()
 
-// Subnet delegation script
-resource ds 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  #disable-next-line use-stable-resource-identifiers
-  name: 'ds-subnetdelegator-${uniqueString(resourceGroup().name)}' 
-  kind: 'AzureCLI'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userAssignedIdentity.id}': {}
-    }
-  }
-  dependsOn: [
-    customerVnet
-    roleAssignment
-    storageContributor
-  ]
-  location: region
-  properties: {
-    storageAccountSettings: {storageAccountName: dsStorage.name}
-    containerSettings: {
-      subnetIds: [
-        {
-          id: infraVnet.properties.subnets[2].id
-        }
-      ]
-    }
-    azCliVersion: '2.69.0'
-    forceUpdateTag: randomGuid
-    retentionInterval: 'PT2H'
-    cleanupPreference: 'OnExpiration'
-    timeout: 'PT20M'
-    scriptContent: concat(
-      'curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/VirtualNetwork/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${infraVnetName};',
-      'resp=$(curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/DelegatedSubnet/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${customerVnetName}%2Fsubnets%2F${delegatedSubnetName});',
-      'token=$(echo "$resp" | grep -oP \'(?<=\\{).*?(?=\\})\' | sed -n \'s/.*"primaryToken":"\\([^"]*\\)".*/\\1/p\');',
-      'resp1=$(curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/DelegatedSubnet/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${customerVnetName}%2Fsubnets%2F${delegatedSubnet1Name});',
-      'token1=$(echo "$resp1" | grep -oP \'(?<=\\{).*?(?=\\})\' | sed -n \'s/.*"primaryToken":"\\([^"]*\\)".*/\\1/p\');',
-      'echo "{\\"salToken\\":\\"$token\\",\\"salToken1\\":\\"$token1\\"}" > $AZ_SCRIPTS_OUTPUT_PATH;',
-      'cat $AZ_SCRIPTS_OUTPUT_PATH;'
-    )
-  }
-}
+// // Subnet delegation script
+// resource ds 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+//   #disable-next-line use-stable-resource-identifiers
+//   name: 'ds-subnetdelegator-${uniqueString(resourceGroup().name)}' 
+//   kind: 'AzureCLI'
+//   identity: {
+//     type: 'UserAssigned'
+//     userAssignedIdentities: {
+//       '${userAssignedIdentity.id}': {}
+//     }
+//   }
+//   dependsOn: [
+//     customerVnet
+//     roleAssignment
+//     storageContributor
+//   ]
+//   location: region
+//   properties: {
+//     storageAccountSettings: {storageAccountName: dsStorage.name}
+//     containerSettings: {
+//       subnetIds: [
+//         {
+//           id: infraVnet.properties.subnets[2].id
+//         }
+//       ]
+//     }
+//     azCliVersion: '2.69.0'
+//     forceUpdateTag: randomGuid
+//     retentionInterval: 'PT2H'
+//     cleanupPreference: 'OnExpiration'
+//     timeout: 'PT20M'
+//     scriptContent: concat(
+//       'curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/VirtualNetwork/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${infraVnetName};',
+//       'resp=$(curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/DelegatedSubnet/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${customerVnetName}%2Fsubnets%2F${delegatedSubnetName});',
+//       'token=$(echo "$resp" | grep -oP \'(?<=\\{).*?(?=\\})\' | sed -n \'s/.*"primaryToken":"\\([^"]*\\)".*/\\1/p\');',
+//       'resp1=$(curl -X PUT ${privateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]}:${subnetDelegator.properties.configuration.ingress.exposedPort}/DelegatedSubnet/%2Fsubscriptions%2F${subscription().subscriptionId}%2FresourceGroups%2F${resourceGroup().name}%2Fproviders%2FMicrosoft.Network%2FvirtualNetworks%2F${customerVnetName}%2Fsubnets%2F${delegatedSubnet1Name});',
+//       'token1=$(echo "$resp1" | grep -oP \'(?<=\\{).*?(?=\\})\' | sed -n \'s/.*"primaryToken":"\\([^"]*\\)".*/\\1/p\');',
+//       'echo "{\\"salToken\\":\\"$token\\",\\"salToken1\\":\\"$token1\\"}" > $AZ_SCRIPTS_OUTPUT_PATH;',
+//       'cat $AZ_SCRIPTS_OUTPUT_PATH;'
+//     )
+//   }
+// }
 
 
 // Outputs
-output salToken string = ds.properties.outputs.salToken
-output salToken1 string = ds.properties.outputs.salToken1
+output salToken string = 'abc' // ds.properties.outputs.salToken
+output salToken1 string = 'def' // ds.properties.outputs.salToken1
 
 // // Execute script
 // resource aksBYNOScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
@@ -569,7 +569,8 @@ resource installSwiftScript 'Microsoft.Resources/deploymentScripts@2020-10-01' =
     cleanupPreference: 'OnExpiration'
     timeout: 'PT30M'
     primaryScriptUri: 'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-microsoft/installSwift.sh'
-    arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "${ds.properties.outputs.salToken}|${ds.properties.outputs.salToken1}" -V ${customerVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${customerVnetName}'
+    // arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "${ds.properties.outputs.salToken}|${ds.properties.outputs.salToken1}" -V ${customerVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${customerVnetName}'
+    arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "abc|def" -V ${customerVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${customerVnetName}'
     supportingScriptUris: [
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-microsoft/Chart.yaml'
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-microsoft/values.yaml'
@@ -600,31 +601,31 @@ output subnetIds array = installSwiftScript.properties.outputs.subnetIDs
 
 
 
-// Cleanup script
-resource dsGc 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  #disable-next-line use-stable-resource-identifiers
-  name: 'ds-gc-${uniqueString(resourceGroup().name)}' 
-  kind: 'AzureCLI'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userAssignedIdentity.id}': {}
-    }
-  }
-  dependsOn: [
-    ds
-    storageContributor
-  ]
-  location: region
-  properties: {
-    azCliVersion: '2.69.0'
-    forceUpdateTag: randomGuid
-    retentionInterval: 'PT2H'
-    cleanupPreference: 'Always'
-    timeout: 'PT20M'
-    scriptContent: concat(
-      'az account set -s ${subscription().subscriptionId};',
-      'az storage account delete --name ${dsStorage.name} -y;'
-    )
-  }
-}
+// // Cleanup script
+// resource dsGc 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+//   #disable-next-line use-stable-resource-identifiers
+//   name: 'ds-gc-${uniqueString(resourceGroup().name)}' 
+//   kind: 'AzureCLI'
+//   identity: {
+//     type: 'UserAssigned'
+//     userAssignedIdentities: {
+//       '${userAssignedIdentity.id}': {}
+//     }
+//   }
+//   dependsOn: [
+//     ds
+//     storageContributor
+//   ]
+//   location: region
+//   properties: {
+//     azCliVersion: '2.69.0'
+//     forceUpdateTag: randomGuid
+//     retentionInterval: 'PT2H'
+//     cleanupPreference: 'Always'
+//     timeout: 'PT20M'
+//     scriptContent: concat(
+//       'az account set -s ${subscription().subscriptionId};',
+//       'az storage account delete --name ${dsStorage.name} -y;'
+//     )
+//   }
+// }
