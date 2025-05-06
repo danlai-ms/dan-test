@@ -265,9 +265,8 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       '${aksClusterKubeletIdentity.id}': {}
     }
   }
-  properties: {
-    
 
+  properties: {
     aadProfile: {
       managed: true
       enableAzureRBAC: true
@@ -325,7 +324,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
 
       networkMode: 'transparent'
       networkPlugin: 'azure'
-      networkPluginMode: 'overlay'
     }
   }
 }
@@ -509,6 +507,7 @@ resource aksBYNOScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/dnc_deployment.yaml'
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/azure_cns_daemonset.yaml'
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/bootstrap-role.yaml'
+      'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/kube-proxy-unmanaged.yaml'
     ]
   }
   // tags: {
