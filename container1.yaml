@@ -24,6 +24,10 @@ spec:
     image: alpine
     command: ["/bin/sh"]
     args: ["-c", "while true; do sleep 36000; done"]
+  - name: debug
+    image: nicolaka/netshoot
+    command: ["sh"]
+    args: ["-c", "sleep infinity"]
   nodeSelector:
     cx: vm1
   restartPolicy: Always

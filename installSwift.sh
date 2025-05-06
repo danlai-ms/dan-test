@@ -186,44 +186,44 @@ echo "DNC_NODES: ${DNC_NODES[@]}"
 
 
 
-# # Label the worker nodes and deploy the cns ConfigMap and DaemonSet
-# echo "Labeling worker nodes..."
-# # WORKER_NODES=("linuxpool120000000" "linuxpool21000000") # TODO : make it come from inpu
-# # Label key and value
-# LABEL_KEY="kubernetes.azure.com/mode"
-# LABEL_VALUE="user"
-# # Loop through each node and apply the label
-# for NODE in "${WORKER_NODES[@]}"; do
-#   kubectl label node "$NODE" "$LABEL_KEY=$LABEL_VALUE" --overwrite
-#   kubectl label node "$NODE" node-type=cnscni --overwrite
-#   echo "Successfully labeled node: $NODE"
-# done
+# Label the worker nodes and deploy the cns ConfigMap and DaemonSet
+echo "Labeling worker nodes..."
+# WORKER_NODES=("linuxpool120000000" "linuxpool21000000") # TODO : make it come from inpu
+# Label key and value
+LABEL_KEY="kubernetes.azure.com/mode"
+LABEL_VALUE="user"
+# Loop through each node and apply the label
+for NODE in "${WORKER_NODES[@]}"; do
+  kubectl label node "$NODE" "$LABEL_KEY=$LABEL_VALUE" --overwrite
+  kubectl label node "$NODE" node-type=cnscni --overwrite
+  echo "Successfully labeled node: $NODE"
+done
 
 
-# # echo "Deploying cns ConfigMap and DaemonSet..."
-# # Deploy the cns ConfigMap
-# echo "Deploying azure_cns_configmap.yaml to namespace default..."
-# kubectl apply -f azure_cns_configmap.yaml -n default
+# echo "Deploying cns ConfigMap and DaemonSet..."
+# Deploy the cns ConfigMap
+echo "Deploying azure_cns_configmap.yaml to namespace default..."
+kubectl apply -f azure_cns_configmap.yaml -n default
 
-# # Deploy the cns DaemonSet
-# echo "Deploying azure_cns_daemonset.yaml to namespace default..."
-# kubectl apply -f azure_cns_daemonset.yaml -n default
+# Deploy the cns DaemonSet
+echo "Deploying azure_cns_daemonset.yaml to namespace default..."
+kubectl apply -f azure_cns_daemonset.yaml -n default
 
-# # Label the dnc nodes and deploy the dnc ConfigMap and Deployment
-# # DNC_NODES=("dncpool20000000") # TODO : make it come from inputs
-# echo "Labeling dnc node..."
-# kubectl label node ${DNC_NODES[0]} node-type=dnc
+# Label the dnc nodes and deploy the dnc ConfigMap and Deployment
+# DNC_NODES=("dncpool20000000") # TODO : make it come from inputs
+echo "Labeling dnc node..."
+kubectl label node ${DNC_NODES[0]} node-type=dnc
 
-# export RESOURCE_GROUP=$RESOURCE_GROUP
-# export DB_NAME=$DB_NAME
-# envsubst < dnc_configmap.yaml > temp.yaml && mv temp.yaml dnc_configmap.yaml
-# echo "Deploying dnc_configmap.yaml to namespace default..."
-# kubectl apply -f dnc_configmap.yaml -n default
+export RESOURCE_GROUP=$RESOURCE_GROUP
+export DB_NAME=$DB_NAME
+envsubst < dnc_configmap.yaml > temp.yaml && mv temp.yaml dnc_configmap.yaml
+echo "Deploying dnc_configmap.yaml to namespace default..."
+kubectl apply -f dnc_configmap.yaml -n default
 
-# echo "Deploying dnc_deployment.yaml to namespace default..."
-# kubectl apply -f dnc_deployment.yaml -n default
+echo "Deploying dnc_deployment.yaml to namespace default..."
+kubectl apply -f dnc_deployment.yaml -n default
 
-# sleep 240
+sleep 240
 
 ########### Port Forwarding Setup ###########
 DNC_POD=$(kubectl get pods -n default -l app=dnc -o jsonpath='{.items[0].metadata.name}')
@@ -254,308 +254,308 @@ echo "Successfully port forwarded to DNC: $DNC_URL"
 ########### Port Forwarding Setup End ###########
 
 # ################ Join vnet ################
-# NETWORK_ID=$CUSTOMER_VNET_ID
-# DNC_ENDPOINT=$DNC_URL
-# RETRY_COUNT=100  # Number of retry attempts
-# RETRY_DELAY=3  # Delay between retries in seconds
+NETWORK_ID=$CUSTOMER_VNET_ID
+DNC_ENDPOINT=$DNC_URL
+RETRY_COUNT=100  # Number of retry attempts
+RETRY_DELAY=3  # Delay between retries in seconds
 
-# # NETWORK_ID="3f84330f-6410-4996-bb28-78513d2eb093" # This is customer vnet id. TODO: Make it come from inputs 
+# NETWORK_ID="3f84330f-6410-4996-bb28-78513d2eb093" # This is customer vnet id. TODO: Make it come from inputs 
 
-# add_vnet() {
-#   NETWORK_TYPE="AzureNet" 
+add_vnet() {
+  NETWORK_TYPE="AzureNet" 
 
-#   network_request=$(cat <<EOF
-# {
-#   "NetworkType": "$NETWORK_TYPE"
-# }
-# EOF
-# )
+  network_request=$(cat <<EOF
+{
+  "NetworkType": "$NETWORK_TYPE"
+}
+EOF
+)
 
-#   echo "Adding network with ID: $NETWORK_ID"
+  echo "Adding network with ID: $NETWORK_ID"
 
-#   # Send the POST request to the DNC API
-#   response=$(curl -s -w "%{http_code}" -o /tmp/add_network_response.json -X POST "$DNC_ENDPOINT/networks/$NETWORK_ID?api-version=2018-03-01" \
-#     -H "Content-Type: application/json" \
-#     -d "$network_request")
+  # Send the POST request to the DNC API
+  response=$(curl -s -w "%{http_code}" -o /tmp/add_network_response.json -X POST "$DNC_ENDPOINT/networks/$NETWORK_ID?api-version=2018-03-01" \
+    -H "Content-Type: application/json" \
+    -d "$network_request")
 
-#   # Extract HTTP status code
-#   http_status=$(tail -n1 <<< "$response")
+  # Extract HTTP status code
+  http_status=$(tail -n1 <<< "$response")
 
-#   # Check if the request was successful
-#   if [[ "$http_status" -ne 200 ]]; then
-#     echo "Failed to add network $NETWORK_ID. HTTP status: $http_status"
-#     cat /tmp/add_network_response.json
-#     exit 1
-#   fi
+  # Check if the request was successful
+  if [[ "$http_status" -ne 200 ]]; then
+    echo "Failed to add network $NETWORK_ID. HTTP status: $http_status"
+    cat /tmp/add_network_response.json
+    exit 1
+  fi
 
-#   echo "Successfully added network $NETWORK_ID."
-#   cat /tmp/add_network_response.json
-# }
+  echo "Successfully added network $NETWORK_ID."
+  cat /tmp/add_network_response.json
+}
 
-# check_vnet_status() {
-#   echo "Checking status of VNet: $NETWORK_ID"
+check_vnet_status() {
+  echo "Checking status of VNet: $NETWORK_ID"
 
-#   # Send the GET request to check the VNet status
-#   response=$(curl -s -w "%{http_code}" -o /tmp/vnet_status_response.json -X GET "$DNC_ENDPOINT/networks/$NETWORK_ID/status?api-version=2018-03-01" \
-#     -H "Content-Type: application/json")
+  # Send the GET request to check the VNet status
+  response=$(curl -s -w "%{http_code}" -o /tmp/vnet_status_response.json -X GET "$DNC_ENDPOINT/networks/$NETWORK_ID/status?api-version=2018-03-01" \
+    -H "Content-Type: application/json")
 
-#   # Extract HTTP status code
-#   http_status=$(tail -n1 <<< "$response")
+  # Extract HTTP status code
+  http_status=$(tail -n1 <<< "$response")
 
-#   # Check if the request was successful
-#   if [[ "$http_status" -ne 200 ]]; then
-#     echo "Failed to get status for VNet $NETWORK_ID. HTTP status: $http_status"
-#     cat /tmp/vnet_status_response.json
-#     return 1
-#   fi
+  # Check if the request was successful
+  if [[ "$http_status" -ne 200 ]]; then
+    echo "Failed to get status for VNet $NETWORK_ID. HTTP status: $http_status"
+    cat /tmp/vnet_status_response.json
+    return 1
+  fi
 
-#   # Parse the status from the response
-#   vnet_status=$(jq -r '.Status' /tmp/vnet_status_response.json)
-#   if [[ "$vnet_status" != "Completed" ]]; then
-#     echo "VNet $NETWORK_ID is not in 'Completed' status. Current status: $vnet_status"
-#     return 1
-#   fi
+  # Parse the status from the response
+  vnet_status=$(jq -r '.Status' /tmp/vnet_status_response.json)
+  if [[ "$vnet_status" != "Completed" ]]; then
+    echo "VNet $NETWORK_ID is not in 'Completed' status. Current status: $vnet_status"
+    return 1
+  fi
 
-#   echo "VNet $NETWORK_ID is in 'Completed' status."
-# }
+  echo "VNet $NETWORK_ID is in 'Completed' status."
+}
 
-# # Retry logic for adding the VNet
-# attempt=1
-# while [[ $attempt -le $RETRY_COUNT ]]; do
-#   if add_vnet; then
-#     echo "Add VNet succeeded on attempt $attempt."
-#     break
-#   fi
+# Retry logic for adding the VNet
+attempt=1
+while [[ $attempt -le $RETRY_COUNT ]]; do
+  if add_vnet; then
+    echo "Add VNet succeeded on attempt $attempt."
+    break
+  fi
 
-#   echo "Add VNet failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
-#   sleep $RETRY_DELAY
-#   attempt=$((attempt + 1))
-# done
+  echo "Add VNet failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
+  sleep $RETRY_DELAY
+  attempt=$((attempt + 1))
+done
 
-# if [[ $attempt -gt $RETRY_COUNT ]]; then
-#   echo "Failed to add VNet after $RETRY_COUNT attempts."
-#   exit 1
-# fi
+if [[ $attempt -gt $RETRY_COUNT ]]; then
+  echo "Failed to add VNet after $RETRY_COUNT attempts."
+  exit 1
+fi
 
-# # Retry logic for checking the VNet status
-# attempt=1
-# while [[ $attempt -le $RETRY_COUNT ]]; do
-#   if check_vnet_status; then
-#     echo "VNet status check succeeded on attempt $attempt."
-#     break
-#   fi
+# Retry logic for checking the VNet status
+attempt=1
+while [[ $attempt -le $RETRY_COUNT ]]; do
+  if check_vnet_status; then
+    echo "VNet status check succeeded on attempt $attempt."
+    break
+  fi
 
-#   echo "VNet status check failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
-#   sleep $RETRY_DELAY
-#   attempt=$((attempt + 1))
-# done
+  echo "VNet status check failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
+  sleep $RETRY_DELAY
+  attempt=$((attempt + 1))
+done
 
-# if [[ $attempt -gt $RETRY_COUNT ]]; then
-#   echo "Failed to verify VNet status after $RETRY_COUNT attempts."
-#   exit 1  # Exit with failure
-# fi
+if [[ $attempt -gt $RETRY_COUNT ]]; then
+  echo "Failed to verify VNet status after $RETRY_COUNT attempts."
+  exit 1  # Exit with failure
+fi
 
 
 # ############# Join subnet to DNC #############
-# # Variables
-# DNC_API_ENDPOINT=$DNC_URL
-# CUSTOMER_VNET_GUID=$CUSTOMER_VNET_ID
-# API_VERSION="2018-03-01"  # Replace with the API version
-# RETRY_COUNT=20  # Number of retry attempts
-# RETRY_DELAY=3  # Delay between retries in seconds
+# Variables
+DNC_API_ENDPOINT=$DNC_URL
+CUSTOMER_VNET_GUID=$CUSTOMER_VNET_ID
+API_VERSION="2018-03-01"  # Replace with the API version
+RETRY_COUNT=20  # Number of retry attempts
+RETRY_DELAY=3  # Delay between retries in seconds
 
-# # CUSTOMER_VNET_GUID="3f84330f-6410-4996-bb28-78513d2eb093"  # # This is customer vnet id. TODO: Make it come from inputs 
-# CUSTOMER_SUBNET_NAMES=("delegatedSubnet" "delegatedSubnet1")  # TODO: Make it come from inputs 
-# IFS='|' read -r -a tokens <<< "$SAL_TOKENS"
+# CUSTOMER_VNET_GUID="3f84330f-6410-4996-bb28-78513d2eb093"  # # This is customer vnet id. TODO: Make it come from inputs 
+CUSTOMER_SUBNET_NAMES=("delegatedSubnet" "delegatedSubnet1")  # TODO: Make it come from inputs 
+IFS='|' read -r -a tokens <<< "$SAL_TOKENS"
 
-# # Function to add a subnet
-# add_subnet() {
-#   local CUSTOMER_SUBNET_NAME=$1
-#   local SAL_TOKEN=$2
-#   echo "Attempting to add subnet: $CUSTOMER_SUBNET_NAME to VNet: $CUSTOMER_VNET_GUID"
-#   echo "AUTH_TOKEN: $SAL_TOKEN"
-#   # Construct the subnet request payload
-#   subnet_request=$(cat <<EOF
-# {
-#   "NetworkID": "$CUSTOMER_VNET_GUID",
-#   "SubnetName": "$CUSTOMER_SUBNET_NAME",
-#   "AuthenticationToken": "$SAL_TOKEN"
-# }
-# EOF
-# )
+# Function to add a subnet
+add_subnet() {
+  local CUSTOMER_SUBNET_NAME=$1
+  local SAL_TOKEN=$2
+  echo "Attempting to add subnet: $CUSTOMER_SUBNET_NAME to VNet: $CUSTOMER_VNET_GUID"
+  echo "AUTH_TOKEN: $SAL_TOKEN"
+  # Construct the subnet request payload
+  subnet_request=$(cat <<EOF
+{
+  "NetworkID": "$CUSTOMER_VNET_GUID",
+  "SubnetName": "$CUSTOMER_SUBNET_NAME",
+  "AuthenticationToken": "$SAL_TOKEN"
+}
+EOF
+)
 
-#   # Send the POST request to add the subnet
-#   response=$(curl -s -w "%{http_code}" -o /tmp/add_subnet_response.json -X POST "$DNC_API_ENDPOINT/networks/$CUSTOMER_VNET_GUID/subnets/$CUSTOMER_SUBNET_NAME?api-version=$API_VERSION" \
-#     -H "Content-Type: application/json" \
-#     -d "$subnet_request")
+  # Send the POST request to add the subnet
+  response=$(curl -s -w "%{http_code}" -o /tmp/add_subnet_response.json -X POST "$DNC_API_ENDPOINT/networks/$CUSTOMER_VNET_GUID/subnets/$CUSTOMER_SUBNET_NAME?api-version=$API_VERSION" \
+    -H "Content-Type: application/json" \
+    -d "$subnet_request")
 
-#   # Extract HTTP status code
-#   http_status=$(tail -n1 <<< "$response")
+  # Extract HTTP status code
+  http_status=$(tail -n1 <<< "$response")
 
-#   # Check if the request was successful
-#   if [[ "$http_status" -ne 200 ]]; then
-#     echo "Failed to add subnet $CUSTOMER_SUBNET_NAME. HTTP status: $http_status"
-#     cat /tmp/add_subnet_response.json
-#     return 1
-#   fi
+  # Check if the request was successful
+  if [[ "$http_status" -ne 200 ]]; then
+    echo "Failed to add subnet $CUSTOMER_SUBNET_NAME. HTTP status: $http_status"
+    cat /tmp/add_subnet_response.json
+    return 1
+  fi
 
-#   echo "Successfully added subnet: $CUSTOMER_SUBNET_NAME"
-#   cat /tmp/add_subnet_response.json
-# }
+  echo "Successfully added subnet: $CUSTOMER_SUBNET_NAME"
+  cat /tmp/add_subnet_response.json
+}
 
-# # Function to check the subnet status
-# check_subnet_status() {
-#   local CUSTOMER_SUBNET_NAME=$1
-#   echo "Checking status of subnet: $CUSTOMER_SUBNET_NAME in VNet: $CUSTOMER_VNET_GUID"
+# Function to check the subnet status
+check_subnet_status() {
+  local CUSTOMER_SUBNET_NAME=$1
+  echo "Checking status of subnet: $CUSTOMER_SUBNET_NAME in VNet: $CUSTOMER_VNET_GUID"
 
-#   # Send the GET request to check the subnet status
-#   response=$(curl -s -w "%{http_code}" -o /tmp/subnet_status_response.json -X GET "$DNC_API_ENDPOINT/networks/$CUSTOMER_VNET_GUID/subnets/$CUSTOMER_SUBNET_NAME/status?api-version=$API_VERSION" \
-#     -H "Content-Type: application/json")
+  # Send the GET request to check the subnet status
+  response=$(curl -s -w "%{http_code}" -o /tmp/subnet_status_response.json -X GET "$DNC_API_ENDPOINT/networks/$CUSTOMER_VNET_GUID/subnets/$CUSTOMER_SUBNET_NAME/status?api-version=$API_VERSION" \
+    -H "Content-Type: application/json")
 
-#   # Extract HTTP status code
-#   http_status=$(tail -n1 <<< "$response")
+  # Extract HTTP status code
+  http_status=$(tail -n1 <<< "$response")
 
-#   # Check if the request was successful
-#   if [[ "$http_status" -ne 200 ]]; then
-#     echo "Failed to get status for subnet $CUSTOMER_SUBNET_NAME. HTTP status: $http_status"
-#     cat /tmp/subnet_status_response.json
-#     return 1
-#   fi
+  # Check if the request was successful
+  if [[ "$http_status" -ne 200 ]]; then
+    echo "Failed to get status for subnet $CUSTOMER_SUBNET_NAME. HTTP status: $http_status"
+    cat /tmp/subnet_status_response.json
+    return 1
+  fi
 
-#   # Parse the status from the response
-#   subnet_status=$(jq -r '.Status' /tmp/subnet_status_response.json)
-#   if [[ "$subnet_status" != "Completed" ]]; then
-#     echo "Subnet $CUSTOMER_SUBNET_NAME is not in 'Completed' status. Current status: $subnet_status"
-#     return 1
-#   fi
+  # Parse the status from the response
+  subnet_status=$(jq -r '.Status' /tmp/subnet_status_response.json)
+  if [[ "$subnet_status" != "Completed" ]]; then
+    echo "Subnet $CUSTOMER_SUBNET_NAME is not in 'Completed' status. Current status: $subnet_status"
+    return 1
+  fi
 
-#   echo "Subnet $CUSTOMER_SUBNET_NAME is in 'Completed' status."
-# }
+  echo "Subnet $CUSTOMER_SUBNET_NAME is in 'Completed' status."
+}
 
-# # Retry logic for adding the subnets
-# for i in "${!CUSTOMER_SUBNET_NAMES[@]}"; do
-#   CUSTOMER_SUBNET_NAME="${CUSTOMER_SUBNET_NAMES[i]}"
-#   TOKEN="${tokens[i]}"
-#   attempt=1
-#   while [[ $attempt -le $RETRY_COUNT ]]; do
-#     if add_subnet "$CUSTOMER_SUBNET_NAME" "$TOKEN"; then
-#       echo "Add subnet succeeded on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME."
-#       break
-#     fi
+# Retry logic for adding the subnets
+for i in "${!CUSTOMER_SUBNET_NAMES[@]}"; do
+  CUSTOMER_SUBNET_NAME="${CUSTOMER_SUBNET_NAMES[i]}"
+  TOKEN="${tokens[i]}"
+  attempt=1
+  while [[ $attempt -le $RETRY_COUNT ]]; do
+    if add_subnet "$CUSTOMER_SUBNET_NAME" "$TOKEN"; then
+      echo "Add subnet succeeded on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME."
+      break
+    fi
 
-#     echo "Add subnet failed on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME. Retrying in $RETRY_DELAY seconds..."
-#     sleep $RETRY_DELAY
-#     attempt=$((attempt + 1))
-#   done
+    echo "Add subnet failed on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME. Retrying in $RETRY_DELAY seconds..."
+    sleep $RETRY_DELAY
+    attempt=$((attempt + 1))
+  done
 
-#   if [[ $attempt -gt $RETRY_COUNT ]]; then
-#     echo "Failed to add subnet: $CUSTOMER_SUBNET_NAME after $RETRY_COUNT attempts."
-#     exit 1
-#   fi
+  if [[ $attempt -gt $RETRY_COUNT ]]; then
+    echo "Failed to add subnet: $CUSTOMER_SUBNET_NAME after $RETRY_COUNT attempts."
+    exit 1
+  fi
 
-#   # Retry logic for checking the subnet status
-#   attempt=1
-#   while [[ $attempt -le $RETRY_COUNT ]]; do
-#     if check_subnet_status "$CUSTOMER_SUBNET_NAME"; then
-#       echo "Subnet status check succeeded on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME."
-#       break
-#     fi
+  # Retry logic for checking the subnet status
+  attempt=1
+  while [[ $attempt -le $RETRY_COUNT ]]; do
+    if check_subnet_status "$CUSTOMER_SUBNET_NAME"; then
+      echo "Subnet status check succeeded on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME."
+      break
+    fi
 
-#     echo "Subnet status check failed on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME. Retrying in $RETRY_DELAY seconds..."
-#     sleep $RETRY_DELAY
-#     attempt=$((attempt + 1))
-#   done
+    echo "Subnet status check failed on attempt $attempt for subnet: $CUSTOMER_SUBNET_NAME. Retrying in $RETRY_DELAY seconds..."
+    sleep $RETRY_DELAY
+    attempt=$((attempt + 1))
+  done
 
-#   if [[ $attempt -gt $RETRY_COUNT ]]; then
-#     echo "Failed to verify subnet status for subnet: $CUSTOMER_SUBNET_NAME after $RETRY_COUNT attempts."
-#     exit 1
-#   fi
-# done
+  if [[ $attempt -gt $RETRY_COUNT ]]; then
+    echo "Failed to verify subnet status for subnet: $CUSTOMER_SUBNET_NAME after $RETRY_COUNT attempts."
+    exit 1
+  fi
+done
 
 # ###################### Register nodes in DNC ######################
-# # Define an array of nodes with their details
-# # NODES=(
-# #   "linuxpool160000000|10.224.0.76"  # Format: NODE_ID|NODE_IP TODO: Make it come from inputs
-# #   "linuxpool161000000|10.224.0.78"
-# # )
+# Define an array of nodes with their details
+# NODES=(
+#   "linuxpool160000000|10.224.0.76"  # Format: NODE_ID|NODE_IP TODO: Make it come from inputs
+#   "linuxpool161000000|10.224.0.78"
+# )
 
-# # NODES=(
-# #   "linuxpool20000000"
-# #   "linuxpool21000000"
-# # )
-# NODES=("${WORKER_NODES[@]}")
-# # Initialize an empty array to store the formatted NODES
-# FORMATTED_NODES=()
+# NODES=(
+#   "linuxpool20000000"
+#   "linuxpool21000000"
+# )
+NODES=("${WORKER_NODES[@]}")
+# Initialize an empty array to store the formatted NODES
+FORMATTED_NODES=()
 
-# # Loop through each node in the NODES array
-# for NODE in "${NODES[@]}"; do
-#   # Get the internal IP of the node using kubectl
-#   NODE_IP=$(kubectl get node "$NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+# Loop through each node in the NODES array
+for NODE in "${NODES[@]}"; do
+  # Get the internal IP of the node using kubectl
+  NODE_IP=$(kubectl get node "$NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
   
-#   # Append the formatted NODE_ID|NODE_IP to the FORMATTED_NODES array
-#   FORMATTED_NODES+=("$NODE|$NODE_IP")
-# done
+  # Append the formatted NODE_ID|NODE_IP to the FORMATTED_NODES array
+  FORMATTED_NODES+=("$NODE|$NODE_IP")
+done
 
-# # Update the NODES array with the formatted values
-# NODES=("${FORMATTED_NODES[@]}")
-# echo "Formatted NODES array: ${NODES[@]}"
-# echo "WORKER_NODES after transformation: ${WORKER_NODES[@]}"
+# Update the NODES array with the formatted values
+NODES=("${FORMATTED_NODES[@]}")
+echo "Formatted NODES array: ${NODES[@]}"
+echo "WORKER_NODES after transformation: ${WORKER_NODES[@]}"
 
-# DNC_ENDPOINT=$DNC_URL  # Replace with the actual DNC endpoint
-# JSON_CONTENT_TYPE="application/json"
-# InfraVnetID=$(az network vnet show --name "$INFRA_VNET_NAME" --resource-group "$RESOURCE_GROUP" --query resourceGuid -o tsv)
+DNC_ENDPOINT=$DNC_URL  # Replace with the actual DNC endpoint
+JSON_CONTENT_TYPE="application/json"
+InfraVnetID=$(az network vnet show --name "$INFRA_VNET_NAME" --resource-group "$RESOURCE_GROUP" --query resourceGuid -o tsv)
 
-# # Function to register a node
-# register_node() {
-#   local NODE_ID=$1
-#   local NODE_IP=$2
+# Function to register a node
+register_node() {
+  local NODE_ID=$1
+  local NODE_IP=$2
 
-#   echo "Registering node: $NODE_ID with IP: $NODE_IP"
+  echo "Registering node: $NODE_ID with IP: $NODE_IP"
 
-#   # Node information payload
-#   NODE_INFO_JSON=$(cat <<EOF
-# {
-#   "IPAddresses": ["$NODE_IP"],
-#   "OrchestratorType": "Kubernetes",
-#   "InfrastructureNetwork": "$InfraVnetID",
-#   "AZID": "",
-#   "NodeType": "",
-#   "NodeSet": "",
-#   "NumCores": 8,
-#   "DualstackEnabled": false
-# }
-# EOF
-#   )
+  # Node information payload
+  NODE_INFO_JSON=$(cat <<EOF
+{
+  "IPAddresses": ["$NODE_IP"],
+  "OrchestratorType": "Kubernetes",
+  "InfrastructureNetwork": "$InfraVnetID",
+  "AZID": "",
+  "NodeType": "",
+  "NodeSet": "",
+  "NumCores": 8,
+  "DualstackEnabled": false
+}
+EOF
+  )
 
-#   # Send HTTP POST request to add the node
-#   response=$(curl -s -w "%{http_code}" -o /tmp/add_node_response_$NODE_ID.json -X POST "$DNC_ENDPOINT/nodes/$NODE_ID?api-version=2018-03-01" \
-#     -H "Content-Type: $JSON_CONTENT_TYPE" \
-#     -d "$NODE_INFO_JSON")
+  # Send HTTP POST request to add the node
+  response=$(curl -s -w "%{http_code}" -o /tmp/add_node_response_$NODE_ID.json -X POST "$DNC_ENDPOINT/nodes/$NODE_ID?api-version=2018-03-01" \
+    -H "Content-Type: $JSON_CONTENT_TYPE" \
+    -d "$NODE_INFO_JSON")
 
-#   # Extract HTTP status code
-#   http_status=$(tail -n1 <<< "$response")
+  # Extract HTTP status code
+  http_status=$(tail -n1 <<< "$response")
 
-#   # Check if the request was successful
-#   if [[ "$http_status" -ne 200 ]]; then
-#     echo "Failed to add node $NODE_ID. HTTP status: $http_status"
-#     cat /tmp/add_node_response_$NODE_ID.json
-#     return 1
-#   fi
+  # Check if the request was successful
+  if [[ "$http_status" -ne 200 ]]; then
+    echo "Failed to add node $NODE_ID. HTTP status: $http_status"
+    cat /tmp/add_node_response_$NODE_ID.json
+    return 1
+  fi
 
-#   echo "Node $NODE_ID added successfully!"
-#   cat /tmp/add_node_response_$NODE_ID.json
-# }
+  echo "Node $NODE_ID added successfully!"
+  cat /tmp/add_node_response_$NODE_ID.json
+}
 
-# # Iterate over the nodes and register each one
-# for node in "${NODES[@]}"; do
-#   IFS="|" read -r NODE_ID NODE_IP <<< "$node"
-#   if ! register_node "$NODE_ID" "$NODE_IP"; then
-#     echo "Error: Failed to register node $NODE_ID"
-#     exit 1
-#   fi
-# done
+# Iterate over the nodes and register each one
+for node in "${NODES[@]}"; do
+  IFS="|" read -r NODE_ID NODE_IP <<< "$node"
+  if ! register_node "$NODE_ID" "$NODE_IP"; then
+    echo "Error: Failed to register node $NODE_ID"
+    exit 1
+  fi
+done
 
-# echo "All nodes registered successfully!"
+echo "All nodes registered successfully!"
 
 ########################### Create NCs ###########################
 CUSTOMER_VNET_GUID=$CUSTOMER_VNET_ID
@@ -581,15 +581,11 @@ nc_id=""
 # )
 # CUSTOMER_VNET_GUID="3f84330f-6410-4996-bb28-78513d2eb093"  # TODO: make it come from inputs
 # Define an array of POD_NAMES corresponding to the nodes
-# POD_NAMES=(
-#   "container1-pod"
-#   "container2-pod"
-# )
-
 POD_NAMES=(
-  "container3-pod"
+  "container1-pod"
+  "container2-pod"
 )
-NODES=("linuxpool20000000|10.224.0.66")
+
 # Initialize an empty array to store the updated NODES
 NC_NODES=()
 # Loop through the NODES array and append the corresponding POD_NAME
@@ -758,14 +754,11 @@ echo "All NCs registered and verified successfully!"
 
 ############################ Deploy Pods ###########################
 # Define an array of pods with their details
-# PODS=(
-#   "container1-pod|container1.yaml|cx=vm1"  # Format: POD_NAME|POD_YAML|LABEL_SELECTOR|NODE_NAME TODO: Make it come from inputs
-#   "container2-pod|container2.yaml|cx=vm2"
-# )
-
 PODS=(
-  "container3-pod|container3.yaml|cx=vm1"  # Format: POD_NAME|POD_YAML|LABEL_SELECTOR|NODE_NAME TODO: Make it come from inputs
+  "container1-pod|container1.yaml|cx=vm1"  # Format: POD_NAME|POD_YAML|LABEL_SELECTOR|NODE_NAME TODO: Make it come from inputs
+  "container2-pod|container2.yaml|cx=vm2"
 )
+
 
 # Loop over the PODS array
 for i in "${!PODS[@]}"; do
