@@ -324,6 +324,10 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
 
       networkMode: 'transparent'
       networkPlugin: 'azure'
+
+      serviceCidr: '10.0.0.0/16'
+      dnsServiceIP: '10.0.0.10'
+      outboundType: 'loadBalancer'
     }
   }
 }
