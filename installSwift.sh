@@ -219,10 +219,8 @@ process_cluster() {
     "kubernetes\.azure\.com\/podnetwork-multi-tenancy-enabled"
     "kubernetes\.azure\.com\/podnetwork-delegationguid"
         )
-        if [  "${{ parameters.cnscniversion }}" == "none" ]; then
           LABEL_KEYS+=("kubernetes\.azure\.com\/cluster")
           echo "Added cluster tag"
-        fi
     for NODENAME in "${nodes[@]}"; do
         for label_key in "${LABEL_KEYS[@]}"; do
         v=$(kubectl get nodes "$SOURCE_NODE" -o jsonpath="{.metadata.labels['$label_key']}")
