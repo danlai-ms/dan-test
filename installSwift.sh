@@ -199,6 +199,42 @@ for NODE in "${WORKER_NODES[@]}"; do
   echo "Successfully labeled node: $NODE"
 done
 
+process_cluster() {
+    local cluster_name=$1
+    local resource_group=$2
+
+    echo "Processing cluster: $cluster_name in resource group: $resource_group"
+
+    nodes=($(kubectl get nodes -l kubernetes.azure.com/managed=false -o jsonpath='{.items[*].metadata.name}'))
+
+    # Adding labels to nodes
+    echo "Adding labels to nodes"
+    SOURCE_NODE=$(kubectl get nodes --selector='!kubernetes.azure.com/managed' -o jsonpath='{.items[0].metadata.name}')
+    LABEL_KEYS=(
+    "kubernetes\.azure\.com\/podnetwork-type"
+    "kubernetes\.azure\.com\/podnetwork-subscription"
+    "kubernetes\.azure\.com\/podnetwork-resourcegroup"
+    "kubernetes\.azure\.com\/podnetwork-name"
+    "kubernetes\.azure\.com\/podnetwork-subnet"
+    "kubernetes\.azure\.com\/podnetwork-multi-tenancy-enabled"
+    "kubernetes\.azure\.com\/podnetwork-delegationguid"
+        )
+        if [  "${{ parameters.cnscniversion }}" == "none" ]; then
+          LABEL_KEYS+=("kubernetes\.azure\.com\/cluster")
+          echo "Added cluster tag"
+        fi
+    for NODENAME in "${nodes[@]}"; do
+        for label_key in "${LABEL_KEYS[@]}"; do
+        v=$(kubectl get nodes "$SOURCE_NODE" -o jsonpath="{.metadata.labels['$label_key']}")
+        l=$(echo "$label_key" | sed 's/\\//g')
+        echo "Labeling node $NODENAME with $l=$v"
+        kubectl label node "$NODENAME" "$l=$v" --overwrite
+        done
+    done
+}
+
+process_cluster "$CLUSTER_NAME" "$RESOURCE_GROUP"
+
 
 # echo "Deploying cns ConfigMap and DaemonSet..."
 # Deploy the cns ConfigMap
