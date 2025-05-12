@@ -285,7 +285,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         name: 'dncpool0'
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
-        vmSize: 'Standard_D2_v2'
+        vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
@@ -305,7 +305,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         }
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
-        vmSize: 'Standard_D2_v2'
+        vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
