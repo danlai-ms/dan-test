@@ -71,9 +71,9 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
   tags: {
     AzSecPackAutoConfigReady: 'true'
     'delegate-ip-allocation-for-nics-without-subnet': 'true'
-    'aks-nic-enable-multi-tenancy': 'true'
+    'aks-nic-enable-multi-tenancy': 'false'
     'delegate-ip-allocation-nic-prefix': 'delegate'
-    fastpathenabled: 'true'
+    fastpathenabled: 'false'
 	  Skip1PGalleryEnforcement: 'true'
   }
   identity: {
@@ -135,7 +135,8 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
               publisher: 'Microsoft.ManagedServices'               
               type: 'ApplicationHealthLinux'               
               typeHandlerVersion: '1.0'               
-              autoUpgradeMinorVersion: true               
+              autoUpgradeMinorVersion: true     
+              enableAutomaticUpgrade: true          
               settings: {                 
                 port: 80                 
                 protocol: 'http'                 
@@ -170,12 +171,12 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
                         id: '${vnet.id}/subnets/${subnetname}'
                       }
                       primary: true
-                      publicIPAddressConfiguration: {
-                        name: 'pub'
-                        sku: {
-                          name: 'Standard'
-                        }
-                      }
+                      // publicIPAddressConfiguration: {
+                      //   name: 'pub'
+                      //   sku: {
+                      //     name: 'Standard'
+                      //   }
+                      // }
                     }
                   }
                 ]
