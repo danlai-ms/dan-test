@@ -287,6 +287,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
+        podSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
           'aks-nic-enable-multi-tenancy': 'false'
@@ -307,6 +308,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
+        podSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
           'aks-nic-enable-multi-tenancy': 'false'
