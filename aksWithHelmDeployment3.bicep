@@ -260,10 +260,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       '${aksClusterKubeletIdentity.id}': {}
     }
   }
-  tags: {
-    'aks-nic-enable-multi-tenancy': 'false'
-    'stampcreatorserviceinfo' : 'true'
-  }
   properties: {
     aadProfile: {
       managed: true
@@ -281,11 +277,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
-        tags: {
-          fastpathenabled: 'false'
-          'aks-nic-enable-multi-tenancy': 'false'
-		      'stampcreatorserviceinfo' : 'true'
-        }
       }
       {
         count: 1
@@ -301,11 +292,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
-        tags: {
-          fastpathenabled: 'false'
-          'aks-nic-enable-multi-tenancy': 'false'
-		      'stampcreatorserviceinfo' : 'true'
-        }
       }
     ]
     dnsPrefix: clusterName
