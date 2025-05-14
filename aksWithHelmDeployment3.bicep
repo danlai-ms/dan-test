@@ -31,9 +31,6 @@ param subnetDelegatorSubscriptionId string = '9b8218f9-902a-4d20-a65c-e98acec536
 param msiRg string = 'RunnersIdentities'
 
 
-
-
-
 var dataActions = [
   'Microsoft.DocumentDB/databaseAccounts/readMetadata'
   'Microsoft.DocumentDB/databaseAccounts/throughputSettings/*'
@@ -84,8 +81,6 @@ module roleAssignments './roleAssignmentsInSub.bicep' = {
     principalId: aksClusterKubeletIdentity.properties.principalId
   }
 }
-
-
 
 resource subnetDelegator 'Microsoft.App/containerApps@2024-10-02-preview' existing = {
   name: subnetDelegatorName
@@ -218,14 +213,14 @@ resource customerVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.0.0.0/16'
+        '10.1.0.0/16'
       ]
     }
     subnets: [
       {
         name: delegatedSubnetName
         properties: {
-          addressPrefix: '10.0.0.0/24'
+          addressPrefix: '10.1.0.0/24'
           delegations: [
             {
               name: 'dnc'
@@ -239,7 +234,7 @@ resource customerVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
       {
         name: delegatedSubnet1Name
         properties: {
-          addressPrefix: '10.0.1.0/24'
+          addressPrefix: '10.1.1.0/24'
           delegations: [
             {
               name: 'dnc1'
@@ -286,8 +281,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
-        vnetSubnetID: infraVnet.properties.subnets[0].id
-        // podSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
           'aks-nic-enable-multi-tenancy': 'false'
@@ -308,7 +301,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         vmSize: 'Standard_D2_v3'
         vnetSubnetID: infraVnet.properties.subnets[0].id
-        // podSubnetID: infraVnet.properties.subnets[0].id
         tags: {
           fastpathenabled: 'false'
           'aks-nic-enable-multi-tenancy': 'false'
@@ -328,8 +320,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     }
     networkProfile: {
       loadBalancerProfile: {
-        managedOutboundIPs: null
-        outboundIPPrefixes: null
         outboundIPs: {
           publicIPs: [
             {
@@ -341,10 +331,6 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
 
       networkMode: 'transparent'
       networkPlugin: 'azure'
-
-      serviceCidr: '10.0.0.0/16'
-      dnsServiceIP: '10.0.0.10'
-      outboundType: 'loadBalancer'
     }
   }
 }
@@ -592,7 +578,7 @@ resource installSwiftScript 'Microsoft.Resources/deploymentScripts@2020-10-01' =
     timeout: 'PT30M'
     primaryScriptUri: 'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/installSwift.sh'
     arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "${ds.properties.outputs.salToken}|${ds.properties.outputs.salToken1}" -V ${customerVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${customerVnetName}'
-    // arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "abc|def" -V ${customerVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${customerVnetName}'
+    //arguments: '-g ${rg} -c ${clusterName} -u ${subscriptionId} -v ${infraVnetName} -t "${ds.properties.outputs.salToken}|${ds.properties.outputs.salToken1}" -V ${infraVnet.properties.resourceGuid} -d ${cosmosdbName} -W ${join(workerVMSSNames, ',')} -D ${join(dncVMSSNames, ',')} -N ${infraVnetName}'
     supportingScriptUris: [
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/Chart.yaml'
       'https://raw.githubusercontent.com/danlai-ms/dan-test/refs/heads/dala-test-ms-full/values.yaml'
