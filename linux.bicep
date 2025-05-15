@@ -92,7 +92,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
     orchestrationMode: 'Uniform'
     overprovision: false
     upgradePolicy: {
-      mode: 'Automatic'
+      mode: 'Manual'
       automaticOSUpgradePolicy: {
         enableAutomaticOSUpgrade: true
       }
