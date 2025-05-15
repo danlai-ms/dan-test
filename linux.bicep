@@ -163,6 +163,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
               properties: {
                 primary: true
                 enableAcceleratedNetworking: true
+                enableIPForwarding: true
                 ipConfigurations: [
                   {
                     name: 'primary-ip'
@@ -171,7 +172,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
                         id: '${vnet.id}/subnets/${subnetname}'
                       }
                       primary: true
-                      enabledipforwarding: true
                       // publicIPAddressConfiguration: {
                       //   name: 'pub'
                       //   sku: {
