@@ -19,8 +19,8 @@ azurecnsUnmanaged:
   enabled: false
   swiftlabel:
     enabled: true
-  podCIDRs: "10.226.0.0/16"
+  podCIDRs: "10.1.0.0/16"
   serviceCIDRs: "10.0.0.0/16"
-  infraVnetCIDRs: "10.225.0.0/16,10.227.0.0/16"
+  infraVnetCIDRs: "110.224.0.0/12"
 installCniPlugins:
   enabled: false
