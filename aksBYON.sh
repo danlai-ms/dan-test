@@ -108,4 +108,4 @@ echo "OID: $OID"
 
 sed "s|__OBJECT_ID__|$OID|g" ./bootstrap-role.yaml | kubectl apply -f -
         echo "installing azure cni and cns."
-        helm install -n kube-system $(uuidgen) ./chart --set installCniPlugins.enabled=true --set cilium.enabled=false --set azurecnsUnmanaged.enabled=false --set wiImageCredProvider.enabled=false
+        helm install -n kube-system $(uuidgen) ./chart --set installCniPlugins.enabled=true --set cilium.enabled=false --set azurecnsUnmanaged.enabled=true --set wiImageCredProvider.enabled=false --set azurecnsUnmanaged.version=v1.6.23 --set azurecnsUnmanaged.versionWindows=v1.6.23
